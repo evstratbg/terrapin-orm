@@ -1,7 +1,9 @@
 [tool.poetry]
 name = "terrapin-orm"
-version = "0.1.0"
+version = "0.0.2"
 description = "Asynchronous orm for Postgresql"
+repository = "https://github.com/evstratbg/terrapin-orm.git"
+homepage = "https://github.com/evstratbg/terrapin-orm.git"
 authors = ["Bogdan <evstrat.bg@gmail.com>"]
 license = "MIT"
 readme = "README.md"
