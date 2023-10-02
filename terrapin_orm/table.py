@@ -73,7 +73,7 @@ class Table(metaclass=BaseTableMeta):
         return await _EXECUTORS["postgres"].execute(sql)
 
     @classmethod
-    async def drop(cls):
+    async def drop_table(cls):
         """Create table in database."""
         sql = f"DROP TABLE {cls.config.table_name};"
         return await _EXECUTORS["postgres"].execute(sql)

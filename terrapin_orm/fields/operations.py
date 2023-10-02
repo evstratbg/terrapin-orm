@@ -35,6 +35,17 @@ class Gt(Operators):
         return ">"
 
 
+class Sub(Operators):
+    @property
+    def op(self):
+        return "-"
+
+
+class Add(Operators):
+    @property
+    def op(self):
+        return "+"
+
 class Gte(Operators):
     @property
     def op(self):

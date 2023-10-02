@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from typing import Iterable as It, Any
-from .operations import Eq, NotEq, Gt, Gte, Lt, Lte, Contains
+from .operations import Eq, NotEq, Gt, Gte, Lt, Lte, Contains, Sub, Add
 
 
 class UnselectedField:
@@ -37,6 +37,12 @@ class Field:
 
     def __le__(self, other: Any):
         return Lte(self.name, other)
+
+    def __sub__(self, other: Any):
+        return Sub(self.name, other)
+
+    def __add__(self, other: Any):
+        return Add(self.name, other)
 
 
 class IndexedField(Field):

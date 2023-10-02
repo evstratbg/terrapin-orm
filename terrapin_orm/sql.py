@@ -36,7 +36,7 @@ class SQLManager:
         return self
 
     def update(self, *args: Field):
-        self.parts["update"] = {a.column: a.value for a in args}
+        self.parts["update"] = [dict(a) for a in args]
         return self
 
     def insert(self, **kwargs: dict[str, Any]):
@@ -77,17 +77,29 @@ class SQLManager:
         if self.parts.get("select"):
             columns = self.parts['select']['columns']
             sql_string += f"SELECT {', '.join(columns)} FROM {self.table.config.table_name}"
+
         elif self.parts.get("select_for_update"):
             columns = self.parts['select_for_update']['columns']
             sql_string += f"SELECT FOR UPDATE{', '.join(columns)} FROM {self.table.config.table_name}"
+
         elif self.parts.get("update"):
             values_sql = []
-            for key, value in self.parts['update'].items():
-                values_sql.append(f"{key}=" + self._resolve_quotes(value))
+            for part in self.parts['update']:
+                value = part["value"]
+                op = part["op"]
+                column = part["column"]
+
+                prepared_value = self._resolve_quotes(value)
+                if op == "=":
+                    values_sql.append(f"{column}={prepared_value}")
+                else:
+                    values_sql.append(f"{column}={column}{op}{prepared_value}")
                 query_args.append(value)
             sql_string += f"UPDATE {self.table.config.table_name} SET {','.join(values_sql)}"
+
         elif self.parts.get("delete"):
             sql_string += f"DELETE FROM {self.table.config.table_name}"
+
         elif self.parts.get("returning"):
             columns = self.parts['returning']['columns']
             sql_string += f" RETURNING {', '.join(columns)}"
