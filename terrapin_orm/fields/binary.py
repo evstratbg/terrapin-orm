@@ -1,7 +1,7 @@
-from .base import BaseField
+from .base import IndexedField
 
 
-class ByteaField(BaseField):
+class ByteaField(IndexedField):
     """Binary data field."""
 
     def sql(self):

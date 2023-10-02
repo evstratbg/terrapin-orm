@@ -1,71 +1,101 @@
-from .base import BaseIndexedField
+from .base import PkField
 
 
-class SmallIntField(BaseIndexedField):
+class SmallIntField(PkField):
     """-32768 to +32767."""
 
     def sql(self):
-        return "SMALLINT"
+        sql = "SMALLINT"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class IntField(BaseIndexedField):
+class IntField(PkField):
     """-2147483648 to +2147483647."""
 
     def sql(self):
-        return "INTEGER"
+        sql = "INTEGER"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class BigIntField(BaseIndexedField):
+class BigIntField(PkField):
     """-9223372036854775808 to +9223372036854775807."""
 
     def sql(self):
-        return "BIGINT"
+        sql = "BIGINT"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class DecimalField(BaseIndexedField):
+class DecimalField(PkField):
     """Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point."""
 
     def sql(self):
-        return "DECIMAL"
+        sql = "DECIMAL"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class NumericField(BaseIndexedField):
+class NumericField(PkField):
     """Up to 131072 digits before the decimal point; up to 16383 digits after the decimal point."""
 
     def sql(self):
-        return "NUMERIC"
+        sql = "NUMERIC"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class RealField(BaseIndexedField):
+class RealField(PkField):
     """6 decimal digits precision."""
 
     def sql(self):
-        return "REAL"
+        sql = "REAL"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class DoublePrecisionField(BaseIndexedField):
+class DoublePrecisionField(PkField):
     """15 decimal digits precision."""
 
     def sql(self):
-        return "DOUBLE PRECISION"
+        sql = "DOUBLE PRECISION"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class SmallSerialField(BaseIndexedField):
+class SmallSerialField(PkField):
     """1 to 32767."""
 
     def sql(self):
-        return "SMALLSERIAL NOT NULL PRIMARY KEY"
+        sql = "SMALLSERIAL NOT NULL"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class SerialField(BaseIndexedField):
+class SerialField(PkField):
     """1 to 2147483647."""
 
     def sql(self):
-        return "SERIAL NOT NULL PRIMARY KEY"
+        sql = "SERIAL NOT NULL"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
-class BigSerialField(BaseIndexedField):
+class BigSerialField(PkField):
     """1 to 9223372036854775807."""
 
     def sql(self):
-        return "BIGSERIAL NOT NULL PRIMARY KEY"
+        sql = "BIGSERIAL NOT NULL"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql

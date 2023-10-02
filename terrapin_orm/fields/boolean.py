@@ -1,7 +1,7 @@
-from .base import BaseIndexedField
+from .base import IndexedField
 
 
-class BooleanField(BaseIndexedField):
+class BooleanField(IndexedField):
     """Boolean field (true or false)."""
 
     def sql(self):

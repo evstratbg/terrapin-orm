@@ -1,119 +1,124 @@
-from .base import BaseArrayField
+from .base import ArrayField
 
 
-class SmallIntArrayField(BaseArrayField):
+class SmallIntArrayField(ArrayField):
     """Array of small-range integers."""
 
     def __init__(self):
         super().__init__(item_type="SMALLINT")
 
+    def index_sql(self, table_name: str, column_name: str):
+        if self.index:
+            return f"CREATE INDEX idx_{table_name}_{column_name} ON {table_name} USING GIN ({column_name});"
+        return ""
 
-class IntegerArrayField(BaseArrayField):
+
+class IntegerArrayField(ArrayField):
     """Array of integers."""
 
     def __init__(self):
         super().__init__(item_type="INTEGER")
 
 
-class BigIntArrayField(BaseArrayField):
+class BigIntArrayField(ArrayField):
     """Array of large-range integers."""
 
     def __init__(self):
         super().__init__(item_type="BIGINT")
 
 
-class DecimalArrayField(BaseArrayField):
+class DecimalArrayField(ArrayField):
     """Array of decimals."""
 
     def __init__(self):
         super().__init__(item_type="DECIMAL")
 
 
-class NumericArrayField(BaseArrayField):
+class NumericArrayField(ArrayField):
     """Array of numeric values."""
 
     def __init__(self):
         super().__init__(item_type="NUMERIC")
 
 
-class RealArrayField(BaseArrayField):
+class RealArrayField(ArrayField):
     """Array of real numbers."""
 
     def __init__(self):
         super().__init__(item_type="REAL")
 
 
-class DoublePrecisionArrayField(BaseArrayField):
+class DoublePrecisionArrayField(ArrayField):
     """Array of double precision numbers."""
 
     def __init__(self):
         super().__init__(item_type="DOUBLE PRECISION")
 
 
-class VarcharArrayField(BaseArrayField):
+class VarcharArrayField(ArrayField):
     """Array of variable-length character strings."""
 
     def __init__(self):
         super().__init__(item_type="VARCHAR")
 
 
-class TextAreaField(BaseArrayField):
+class TextAreaField(ArrayField):
     """Array of text."""
 
     def __init__(self):
         super().__init__(item_type="TEXT")
 
 
-class ByteaArrayField(BaseArrayField):
+class ByteaArrayField(ArrayField):
     """Array of binary data."""
 
     def __init__(self):
         super().__init__(item_type="BYTEA")
 
 
-class DateArrayField(BaseArrayField):
+class DateArrayField(ArrayField):
     """Array of dates."""
 
     def __init__(self):
         super().__init__(item_type="DATE")
 
 
-class TimeArrayField(BaseArrayField):
+class TimeArrayField(ArrayField):
     """Array of times without time zones."""
 
     def __init__(self):
         super().__init__(item_type="TIME")
 
 
-class TimeWithTimeZoneArrayField(BaseArrayField):
+class TimeWithTimeZoneArrayField(ArrayField):
     """Array of times with time zones."""
 
     def __init__(self):
         super().__init__(item_type="TIME WITH TIME ZONE")
 
 
-class TimestampArrayField(BaseArrayField):
+class TimestampArrayField(ArrayField):
     """Array of timestamps without time zones."""
 
     def __init__(self):
         super().__init__(item_type="TIMESTAMP")
 
 
-class TimestampWithTimeZoneArrayField(BaseArrayField):
+class TimestampWithTimeZoneArrayField(ArrayField):
     """Array of timestamps with time zones."""
 
     def __init__(self):
         super().__init__(item_type="TIMESTAMP WITH TIME ZONE")
 
 
-class BooleanArrayField(BaseArrayField):
+class BooleanArrayField(ArrayField):
     """Array of boolean values."""
 
     def __init__(self):
         super().__init__(item_type="BOOLEAN")
 
 
-class UUIDArrayField(BaseArrayField):
+class UUIDArrayField(ArrayField):
     """Array of UUIDs."""
 
     def __init__(self):

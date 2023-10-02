@@ -1,7 +1,7 @@
-from .base import BaseField
+from .base import IndexedField
 
 
-class UUIDField(BaseField):
+class UUIDField(IndexedField):
     """Universal Unique Identifier field."""
 
     def sql(self):

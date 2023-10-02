@@ -12,6 +12,7 @@ packages = [{include = "terrapin_orm"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 asyncpg = "^0.28.0"
+orjson = "^3.9.7"
 
 
 [tool.poetry.group.dev.dependencies]
