@@ -2,7 +2,7 @@ from typing import Any
 from abc import abstractmethod
 
 
-class Operators:
+class Operator:
     def __init__(self, column: str, value: Any):
         self.column = column
         self.value = value
@@ -17,83 +17,83 @@ class Operators:
         yield 'value', self.value
 
 
-class Eq(Operators):
+class Eq(Operator):
     @property
     def op(self):
         return "="
 
 
-class NotEq(Operators):
+class NotEq(Operator):
     @property
     def op(self):
         return "!="
 
 
-class Gt(Operators):
+class Gt(Operator):
     @property
     def op(self):
         return ">"
 
 
-class Sub(Operators):
+class Sub(Operator):
     @property
     def op(self):
         return "-"
 
 
-class Add(Operators):
+class Add(Operator):
     @property
     def op(self):
         return "+"
 
-class Gte(Operators):
+class Gte(Operator):
     @property
     def op(self):
         return ">="
 
 
-class Lt(Operators):
+class Lt(Operator):
     @property
     def op(self):
         return "<"
 
 
-class Lte(Operators):
+class Lte(Operator):
     @property
     def op(self):
         return "<="
 
 
-class Lte(Operators):
+class Lte(Operator):
     @property
     def op(self):
         return "<="
 
 
-class Contains(Operators):
+class Contains(Operator):
     @property
     def op(self):
         return "in"
 
 
-class HasKey(Operators):
+class HasKey(Operator):
     @property
     def op(self):
         return "?"
 
 
-class GetJson(Operators):
+class GetJson(Operator):
     @property
     def op(self):
         return "->"
 
 
-class GetValue(Operators):
+class GetValue(Operator):
     @property
     def op(self):
         return "->>"
 
-class NewOP(Operators):
+class NewOP(Operator):
     @property
     def op(self):
         return "&&"

@@ -3,6 +3,7 @@ from typing import Any
 from itertools import chain
 
 from .fields.base import Field
+from .fields.operations import Operator
 from .connection import _EXECUTORS
 
 
@@ -36,7 +37,16 @@ class SQLManager:
         return self
 
     def update(self, *args: Field):
-        self.parts["update"] = [dict(a) for a in args]
+        self.parts["update"] = []
+        for arg in args:
+            value = arg.value
+            op = arg.op
+            column = arg.column
+            if isinstance(value, Operator):
+                column = f'{column}={value.column}{value.op}'
+                value = value.value
+                op = "colum_modifier"
+            self.parts["update"].append({"value": value, "op": op, "column": column})
         return self
 
     def insert(self, **kwargs: dict[str, Any]):
@@ -92,6 +102,8 @@ class SQLManager:
                 prepared_value = self._resolve_quotes(value)
                 if op == "=":
                     values_sql.append(f"{column}={prepared_value}")
+                elif op == "colum_modifier":
+                    values_sql.append(f"{column}{prepared_value}")
                 else:
                     values_sql.append(f"{column}={column}{op}{prepared_value}")
                 query_args.append(value)
