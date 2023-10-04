@@ -1,7 +1,7 @@
 import asyncpg
 
+from .fields import TimestampField, VarcharField
 from .table import Table
-from .fields import VarcharField, TimestampField
 
 
 class Terrapin(Table):
@@ -14,8 +14,8 @@ async def generate_migration_script():
 
     # Проверка наличия поля city в реальной таблице
     exists = await conn.fetchrow("""
-        SELECT column_name 
-        FROM information_schema.columns 
+        SELECT column_name
+        FROM information_schema.columns
         WHERE table_name = 'usertable' AND column_name = 'city';""",
     )
 

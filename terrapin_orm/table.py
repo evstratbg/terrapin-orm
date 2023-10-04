@@ -1,60 +1,62 @@
 from typing import Any
-from .fields.base import Field, IndexedField, UnselectedField
-from .sql import SQLManager
+
+from .configs import TableConfig
 from .connection import _EXECUTORS
-
-
-class Config:
-    """Table configuration."""
-
-    table_name: str = None
-    db_alias: str = "default"
-    abstract: bool = True
+from .fields.base import Field, IndexedField, PkField, UnselectedField
+from .sql import SQLManager
 
 
 class BaseTableMeta(type):
-    def __new__(cls, name, bases, attrs):
+    def __new__(cls, name: str, bases: tuple, attrs: dict) -> object:
         columns = []
+        pk = None
+        if "config" not in attrs:
+            raise ValueError(f"Table {name} must have `config` attribute")
         for attr_name, attr_value in attrs.items():
             if isinstance(attr_value, Field):
                 columns.append(attr_name)
+            if isinstance(attr_value, PkField) and attr_value.pk:
+                pk = attr_name
+
         attrs["_columns"] = columns
+        attrs["_pk"] = pk
         return super().__new__(cls, name, bases, attrs)
 
 
 class Table(metaclass=BaseTableMeta):
     """Base class for database tables."""
-    config = Config
+    config = TableConfig(table_name="", db_alias="default", abstract=True)
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: [str, [str, int, bool, dict, list, tuple]]) -> None:
+        self.raw_data = kwargs
         for column in self._columns:
-            # print(column, kwargs.get(column))
             setattr(self, column, kwargs.get(column, UnselectedField))
 
-    def __getattribute__(self, name):
+    def __getattribute__(self, name: str):
         attr = super().__getattribute__(name)
         if attr is UnselectedField:
             raise AttributeError(f"Column '{name}' was\'t selected")
         return attr
 
-    @property
-    def table_name(self) -> str:
-        table_name = self.__class__.__name__.lower()
-        if self.config.table_name:
-            table_name = self.config.table_name
-        return table_name
+    @classmethod
+    def table_name(cls) -> str:
+        return cls.config.table_name
 
     @classmethod
     def sql(cls):
         """Generate SQL statement to create the table."""
         fields = {k: v for k, v in cls.__dict__.items() if isinstance(v, Field)}
-        table_name = cls.config.table_name
+        table_name = cls.table_name()
 
         field_definitions = []
         field_indexes = []
         for name, field in fields.items():
             field_definitions.append(f"{name} {field.sql()}")
             if isinstance(field, IndexedField) and field.index:
+                field_indexes.append(
+                    field.index_sql(table_name, name),
+                )
+            if isinstance(field, PkField) and field.pk:
                 field_indexes.append(
                     field.index_sql(table_name, name),
                 )
@@ -75,7 +77,7 @@ class Table(metaclass=BaseTableMeta):
     @classmethod
     async def drop_table(cls):
         """Create table in database."""
-        sql = f"DROP TABLE {cls.config.table_name};"
+        sql = f"DROP TABLE {cls.table_name()};"
         return await _EXECUTORS["postgres"].execute(sql)
 
     @classmethod
@@ -95,9 +97,18 @@ class Table(metaclass=BaseTableMeta):
         return SQLManager(cls).delete()
 
     @classmethod
-    def update(cls, *kwargs: tuple[Field, Any]):
-        return SQLManager(cls).update(*kwargs)
+    def update(cls):
+        return SQLManager(cls)
 
     @classmethod
-    def insert(cls, **kwargs: dict[str, Any]):
+    def set(cls, *kwargs: tuple[Field, Any]):
+        return SQLManager(cls).set(*kwargs)
+
+    @classmethod
+    def insert(cls, **kwargs: dict[str, str | int | bool | dict | list | tuple]):
+        if not kwargs:
+            raise ValueError("Nothing to insert")
+        unknown_columns = set(kwargs) - set(cls._columns)
+        if unknown_columns:
+            raise ValueError("Unknown columns: " + ", ".join(unknown_columns))
         return SQLManager(cls).insert(**kwargs)

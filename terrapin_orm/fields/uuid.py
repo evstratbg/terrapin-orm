@@ -1,8 +1,8 @@
-from .base import IndexedField
+from .base import PkField
 
 
-class UUIDField(IndexedField):
+class UUIDField(PkField):
     """Universal Unique Identifier field."""
 
     def sql(self):
-        return "UUID"
+        return "UUID" if not self.pk else "UUID PRIMARY KEY"

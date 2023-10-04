@@ -1,15 +1,15 @@
+from itertools import chain
 from typing import Any
 
-from itertools import chain
-
+from .connection import _EXECUTORS
 from .fields.base import Field
 from .fields.operations import Operator
-from .connection import _EXECUTORS
 
 
 class SQLManager:
     def __init__(self, table):
         self.table = table
+        self.table_name = table.table_name()
         self.parts = {}
         self._vars_counter = 0
 
@@ -33,17 +33,21 @@ class SQLManager:
             columns = self.table._columns
         else:
             columns = [f.name for f in columns if isinstance(f, Field)]
-        self.parts["select_for_update"] = {"columns": columns, "nowait": nowait, "skip_locked": skip_locked}
+        self.parts["select_for_update"] = {
+            "columns": columns,
+            "nowait": nowait,
+            "skip_locked": skip_locked,
+        }
         return self
 
-    def update(self, *args: Field):
+    def set(self, *args: Field):
         self.parts["update"] = []
         for arg in args:
             value = arg.value
             op = arg.op
             column = arg.column
             if isinstance(value, Operator):
-                column = f'{column}={value.column}{value.op}'
+                column = f"{column}={value.column}{value.op}"
                 value = value.value
                 op = "colum_modifier"
             self.parts["update"].append({"value": value, "op": op, "column": column})
@@ -85,16 +89,16 @@ class SQLManager:
         sql_string = ""
         query_args = []
         if self.parts.get("select"):
-            columns = self.parts['select']['columns']
-            sql_string += f"SELECT {', '.join(columns)} FROM {self.table.config.table_name}"
+            columns = self.parts["select"]["columns"]
+            sql_string += f"SELECT {', '.join(columns)} FROM {self.table_name}"
 
         elif self.parts.get("select_for_update"):
-            columns = self.parts['select_for_update']['columns']
-            sql_string += f"SELECT FOR UPDATE{', '.join(columns)} FROM {self.table.config.table_name}"
+            columns = self.parts["select_for_update"]["columns"]
+            sql_string += f"SELECT FOR UPDATE {', '.join(columns)} FROM {self.table_name}"
 
         elif self.parts.get("update"):
             values_sql = []
-            for part in self.parts['update']:
+            for part in self.parts["update"]:
                 value = part["value"]
                 op = part["op"]
                 column = part["column"]
@@ -107,13 +111,13 @@ class SQLManager:
                 else:
                     values_sql.append(f"{column}={column}{op}{prepared_value}")
                 query_args.append(value)
-            sql_string += f"UPDATE {self.table.config.table_name} SET {','.join(values_sql)}"
+            sql_string += f"UPDATE {self.table_name} SET {','.join(values_sql)}"
 
         elif self.parts.get("delete"):
-            sql_string += f"DELETE FROM {self.table.config.table_name}"
+            sql_string += f"DELETE FROM {self.table_name}"
 
         elif self.parts.get("returning"):
-            columns = self.parts['returning']['columns']
+            columns = self.parts["returning"]["columns"]
             sql_string += f" RETURNING {', '.join(columns)}"
         elif self.parts.get("insert"):
             columns = self.parts["insert"]["columns"]
@@ -121,7 +125,7 @@ class SQLManager:
             values_sql = []
             for value in values:
                 values_sql.append(self._resolve_quotes(value))
-            sql_string += f"INSERT INTO {self.table.config.table_name} ({', '.join(columns)}) VALUES ({', '.join(values_sql)}) RETURNING {', '.join(self.table._columns)}"
+            sql_string += f"INSERT INTO {self.table_name} ({', '.join(columns)}) VALUES ({', '.join(values_sql)}) RETURNING {', '.join(self.table._columns)}"
             query_args = values
 
         where_clause = " WHERE "
@@ -154,6 +158,7 @@ class SQLManager:
             records = await _EXECUTORS["postgres"].fetchall(sql_string, *query_args)
             if records:
                 return [self.table(**r) for r in records]
+            return None
         else:
             response = await _EXECUTORS["postgres"].execute(sql_string, *query_args)
             return response.split(" ")[-1]

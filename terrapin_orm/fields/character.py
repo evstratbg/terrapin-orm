@@ -10,7 +10,10 @@ class VarcharField(PkField):
 
     def sql(self):
         """Generate SQL for the VARCHAR field definition."""
-        return f"VARCHAR({self.max_length})" if self.max_length else "VARCHAR"
+        sql = f"VARCHAR({self.max_length})" if self.max_length else "VARCHAR"
+        if self.pk:
+            sql += " PRIMARY KEY"
+        return sql
 
 
 class TextField(Field):

@@ -1,24 +1,6 @@
 from .connection import PoolManager
 from .table import Table
-
-from dataclasses import dataclass
-from typing import List
-
-
-@dataclass
-class DatabaseConfig:
-    engine: str
-    host: str
-    port: int
-    name: str
-    user: str
-    password: str
-    alias: str = "default"
-
-
-@dataclass
-class OrmConfig:
-    databases: List[DatabaseConfig]
+from .configs import OrmConfig
 
 
 class TerrapinORM:
@@ -26,9 +8,11 @@ class TerrapinORM:
     async def init(cls, config: OrmConfig):
         aliases = {db.alias for db in config.databases}
         for subclass in Table.__subclasses__():
-            if subclass.config.db_alias not in aliases:
+            db_alias = subclass.config.db_alias
+            if db_alias not in aliases:
                 raise ValueError(
-                    f"Table {subclass.__name__} db_alias `{subclass.Config.db_alias}` which is not present in config"
+                    f"Table {subclass.__name__} db_alias "
+                    f"`{db_alias}` which is not present in config",
                 )
         for db in config.databases:
             await PoolManager.add_pool(

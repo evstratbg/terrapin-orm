@@ -13,7 +13,7 @@ class SmallIntArrayField(ArrayField):
         return ""
 
 
-class IntegerArrayField(ArrayField):
+class IntArrayField(ArrayField):
     """Array of integers."""
 
     def __init__(self):

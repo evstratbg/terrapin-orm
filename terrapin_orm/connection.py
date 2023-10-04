@@ -1,10 +1,6 @@
 from typing import Any
-from urllib.parse import urlparse
 
 import asyncpg
-import orjson
-
-from .utils import orjson_dumps
 
 
 class Executor:
@@ -29,8 +25,7 @@ class Executor:
         are provided.
         """
         async with self._pool.acquire() as conn:
-            r = await conn.execute(query, *args, timeout=timeout)
-            return r
+            return await conn.execute(query, *args, timeout=timeout)
 
     async def executemany(self, command: str, args: Any, *, timeout: int | None = None):
         """Execute an SQL *command* for each sequence of arguments in *args*."""

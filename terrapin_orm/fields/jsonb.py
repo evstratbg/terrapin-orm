@@ -1,5 +1,5 @@
 from .base import IndexedField
-from .operations import HasKey, GetJson, GetValue
+from .operations import GetJson, GetValue, HasKey
 
 
 class JSONBField(IndexedField):

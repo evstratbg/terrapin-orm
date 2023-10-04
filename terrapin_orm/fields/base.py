@@ -1,6 +1,8 @@
 from abc import abstractmethod
-from typing import Iterable as It, Any
-from .operations import Eq, NotEq, Gt, Gte, Lt, Lte, Contains, Sub, Add
+from typing import Any
+from typing import Iterable as It
+
+from .operations import Add, Contains, Eq, Gt, Gte, IAdd, Lt, Lte, NotEq, Sub, ISub, Mul, IMul, Div, IDiv
 
 
 class UnselectedField:
@@ -9,6 +11,9 @@ class UnselectedField:
 
 class Field:
     """Generic field without specific constraints."""
+    def __init__(self):
+        self.name = None
+        self.value = None
 
     @abstractmethod
     def sql(self):
@@ -17,13 +22,16 @@ class Field:
     def in_(self, value: It):
         return Contains(self.name, value)
 
-    def __set_name__(self, owner, name: str):
+    def __set_name__(self, owner: Any, name: str):
         self.name = name
 
-    def __eq__(self, other: Any):
+    def __set__(self, instance: Any, value: Any):
+        self.value = value
+
+    def __eq__(self, other: object):
         return Eq(self.name, other)
 
-    def __ne__(self, other: Any):
+    def __ne__(self, other: object):
         return NotEq(self.name, other)
 
     def __gt__(self, other: Any):
@@ -43,6 +51,24 @@ class Field:
 
     def __add__(self, other: Any):
         return Add(self.name, other)
+
+    def __iadd__(self, other: Any):
+        return IAdd(self.name, other)
+
+    def __isub__(self, other: Any):
+        return ISub(self.name, other)
+
+    def __mul__(self, other: Any):
+        return Mul(self.name, other)
+
+    def __imul__(self, other: Any):
+        return IMul(self.name, other)
+
+    def __truediv__(self, other: Any):
+        return Div(self.name, other)
+
+    def __itruediv__(self, other: Any):
+        return IDiv(self.name, other)
 
 
 class IndexedField(Field):

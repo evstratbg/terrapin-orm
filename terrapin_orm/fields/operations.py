@@ -1,5 +1,5 @@
-from typing import Any
 from abc import abstractmethod
+from typing import Any
 
 
 class Operator:
@@ -12,9 +12,9 @@ class Operator:
         raise NotImplementedError("Subclasses must implement the op method")
 
     def __iter__(self):
-        yield 'column', self.column
-        yield 'op', self.op
-        yield 'value', self.value
+        yield "column", self.column
+        yield "op", self.op
+        yield "value", self.value
 
 
 class Eq(Operator):
@@ -41,10 +41,39 @@ class Sub(Operator):
         return "-"
 
 
+class ISub(Sub):
+    pass
+
+
+class Mul(Operator):
+    @property
+    def op(self):
+        return "*"
+
+
+class IMul(Mul):
+    pass
+
+
+class Div(Operator):
+    @property
+    def op(self):
+        return "/"
+
+
+class IDiv(Div):
+    pass
+
+
 class Add(Operator):
     @property
     def op(self):
         return "+"
+
+
+class IAdd(Add):
+    pass
+
 
 class Gte(Operator):
     @property
@@ -92,8 +121,3 @@ class GetValue(Operator):
     @property
     def op(self):
         return "->>"
-
-class NewOP(Operator):
-    @property
-    def op(self):
-        return "&&"
