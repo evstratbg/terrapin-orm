@@ -1,9 +1,7 @@
-from typing import Any
 
 from .configs import TableConfig
 from .connection import _EXECUTORS
 from .fields.base import Field, IndexedField, PkField, UnselectedField
-from .sql import SQLManager
 
 
 class BaseTableMeta(type):
@@ -79,36 +77,3 @@ class Table(metaclass=BaseTableMeta):
         """Create table in database."""
         sql = f"DROP TABLE {cls.table_name()};"
         return await _EXECUTORS["postgres"].execute(sql)
-
-    @classmethod
-    def select_for_update(cls, *fields: Field, nowait: bool = False, skip_locked: bool = False):
-        return SQLManager(cls).select_for_update(*fields, nowait=nowait, skip_locked=skip_locked)
-
-    @classmethod
-    def select(cls, *fields: Field):
-        return SQLManager(cls).select(*fields)
-
-    @classmethod
-    def where(cls, *fields: tuple[Field, Any]):
-        return SQLManager(cls).where(*fields)
-
-    @classmethod
-    def delete(cls):
-        return SQLManager(cls).delete()
-
-    @classmethod
-    def update(cls):
-        return SQLManager(cls)
-
-    @classmethod
-    def set(cls, *kwargs: tuple[Field, Any]):
-        return SQLManager(cls).set(*kwargs)
-
-    @classmethod
-    def insert(cls, **kwargs: dict[str, str | int | bool | dict | list | tuple]):
-        if not kwargs:
-            raise ValueError("Nothing to insert")
-        unknown_columns = set(kwargs) - set(cls._columns)
-        if unknown_columns:
-            raise ValueError("Unknown columns: " + ", ".join(unknown_columns))
-        return SQLManager(cls).insert(**kwargs)

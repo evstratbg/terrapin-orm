@@ -1,6 +1,6 @@
+from .configs import OrmConfig
 from .connection import PoolManager
 from .table import Table
-from .configs import OrmConfig
 
 
 class TerrapinORM:

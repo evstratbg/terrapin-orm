@@ -17,7 +17,6 @@ from .array import (
     UUIDArrayField,
     VarcharArrayField,
 )
-from .binary import ByteaField
 from .boolean import BooleanField
 from .character import TextField, VarcharField
 from .datetime import DateField, TimeField, TimestampField, TimestampWithTimeZoneField, TimeWithTimeZoneField
@@ -43,7 +42,6 @@ __all__ = [
     "TimeWithTimeZoneArrayField",
     "UUIDArrayField",
     "VarcharArrayField",
-    "ByteaField",
     "BooleanField",
     "TextField",
     "VarcharField",

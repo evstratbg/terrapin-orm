@@ -15,9 +15,15 @@ class VarcharField(PkField):
             sql += " PRIMARY KEY"
         return sql
 
+    def python_type(self):
+        return str
+
 
 class TextField(Field):
     """Unlimited length text field."""
 
     def sql(self):
         return "TEXT"
+
+    def python_type(self):
+        return str

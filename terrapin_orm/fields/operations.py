@@ -9,7 +9,10 @@ class Operator:
 
     @abstractmethod
     def op(self):
-        raise NotImplementedError("Subclasses must implement the op method")
+        raise NotImplementedError("Subclasses must implement the `op` method")
+
+    def resolve(self):
+        return self.column, self.op, self.value
 
     def __iter__(self):
         yield "column", self.column
@@ -92,11 +95,6 @@ class Lte(Operator):
     def op(self):
         return "<="
 
-
-class Lte(Operator):
-    @property
-    def op(self):
-        return "<="
 
 
 class Contains(Operator):

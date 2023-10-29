@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Any
 from typing import Iterable as It
 
-from .operations import Add, Contains, Eq, Gt, Gte, IAdd, Lt, Lte, NotEq, Sub, ISub, Mul, IMul, Div, IDiv
+from .operations import Add, Contains, Div, Eq, Gt, Gte, IAdd, IDiv, IMul, ISub, Lt, Lte, Mul, NotEq, Sub
 
 
 class UnselectedField:
@@ -70,6 +70,10 @@ class Field:
     def __itruediv__(self, other: Any):
         return IDiv(self.name, other)
 
+    @abstractmethod
+    def python_type(self):
+        raise NotImplementedError("Subclasses must implement the `python_type` method")
+
 
 class IndexedField(Field):
     """A base field class that supports indexing."""
@@ -107,3 +111,6 @@ class ArrayField(IndexedField):
 
     def sql(self):
         return f"{self.item_type}[]"
+
+    def python_type(self):
+        return list

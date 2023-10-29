@@ -6,3 +6,6 @@ class BooleanField(IndexedField):
 
     def sql(self):
         return "BOOLEAN"
+
+    def python_type(self):
+        return bool

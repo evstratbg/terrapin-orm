@@ -16,10 +16,10 @@ class JSONBField(IndexedField):
             return f"CREATE INDEX idx_{table_name}_{column_name} ON {table_name} USING GIN ({column_name});"
         return ""
 
-    def has_key(self, key):
+    def has_key(self, key: str):
         return HasKey(self.name, key)
 
-    def get_json(self, key):
+    def get_json(self, key: str):
         return GetJson(self.name, key)
 
     def get_value(self, key):

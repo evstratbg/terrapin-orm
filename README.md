@@ -5,14 +5,8 @@ A simple set of classes for representing PostgreSQL fields in your Python applic
 
 TODO:
 
-1) OR expressions
-2) Joins 
-3) Aggregates 
-4) Grouping 
-5) Ordering 
-6) Migrations 
-7) Functions
-8) Subqueries
-9) raw_sql
-10) Tests
+1) Joins
+2) Migrations
+3) raw_sql
+4) Tests
 

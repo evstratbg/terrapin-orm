@@ -1,17 +1,27 @@
 from itertools import chain
-from typing import Any
+from typing import Any, Sequence
 
 from .connection import _EXECUTORS
 from .fields.base import Field
 from .fields.operations import Operator
+from .table import Table
 
 
 class SQLManager:
-    def __init__(self, table):
-        self.table = table
-        self.table_name = table.table_name()
+    def __init__(self, table: type[Table] | None = None):
         self.parts = {}
         self._vars_counter = 0
+        self.table = table
+        self.table_name = table.table_name() if table else None
+
+    def set_table(self, table: Table):
+        self.table = table
+        self.table_name = table.table_name()
+        return self
+
+    def from_(self, table: Table):
+        self.set_table(table)
+        return self
 
     def select(self, *columns: Field):
         """
@@ -40,20 +50,18 @@ class SQLManager:
         }
         return self
 
-    def set(self, *args: Field):
+    def set(self, **kwargs: dict[str, Field | Operator]):
         self.parts["update"] = []
-        for arg in args:
-            value = arg.value
-            op = arg.op
-            column = arg.column
-            if isinstance(value, Operator):
-                column = f"{column}={value.column}{value.op}"
-                value = value.value
-                op = "colum_modifier"
-            self.parts["update"].append({"value": value, "op": op, "column": column})
+        for left, right in kwargs.items():
+            op = "="
+            if isinstance(right, Operator):
+                left = f"{left}={right.column}"
+                op = right.op
+                right = right.value
+            self.parts["update"].append({"left": left, "op": op, "right": right})
         return self
 
-    def insert(self, **kwargs: dict[str, Any]):
+    def values(self, **kwargs: dict[str, Any]):
         self.parts["insert"] = {"columns": list(kwargs.keys()), "values": list(kwargs.values())}
         return self
 
@@ -69,15 +77,38 @@ class SQLManager:
         self.parts["returning"] = {"columns": columns}
         return self
 
-    def where(self, *args: tuple[Field, Any]):
-        self.parts.setdefault("where", []).extend(dict(a) for a in args)
+    def order_by(self, *columns: Field):
+        self.parts["order_by"] = {"columns": columns}
+        return self
+
+    def limit(self, limit: int):
+        self.parts["limit"] = limit
+        return self
+
+    def offset(self, offset: int):
+        self.parts["offset"] = offset
+        return self
+
+    def where(self, *args: Sequence[Operator], **kwargs: dict[str, Operator | Any]):
+        self.parts.setdefault("where", [])
+        for arg in args:
+            arg: Operator
+            left, op, right = arg.resolve()
+            self.parts.setdefault("where", []).append({"right": right, "op": op, "left": left})
+        for left, right in kwargs.items():
+            op = "="
+            if isinstance(right, Operator):
+                left = f"{left}={right.column}"
+                op = right.op
+                right = right.value
+            self.parts.setdefault("where", []).append({"right": right, "op": op, "left": left})
         return self
 
     def _resolve_quotes(self, value: Any):
         self._vars_counter += 1
         if isinstance(value, (int, float, bool, str)):
             return f"${self._vars_counter}"
-        elif isinstance(value, (list, tuple)):
+        if isinstance(value, (list, tuple)):
             values = []
             for v in value:
                 values.append(self._resolve_quotes(v))
@@ -86,6 +117,7 @@ class SQLManager:
             return value
 
     def _prepate_sql(self):
+        self._vars_counter = 0
         sql_string = ""
         query_args = []
         if self.parts.get("select"):
@@ -99,18 +131,13 @@ class SQLManager:
         elif self.parts.get("update"):
             values_sql = []
             for part in self.parts["update"]:
-                value = part["value"]
+                right = part["right"]
                 op = part["op"]
-                column = part["column"]
+                left = part["left"]
 
-                prepared_value = self._resolve_quotes(value)
-                if op == "=":
-                    values_sql.append(f"{column}={prepared_value}")
-                elif op == "colum_modifier":
-                    values_sql.append(f"{column}{prepared_value}")
-                else:
-                    values_sql.append(f"{column}={column}{op}{prepared_value}")
-                query_args.append(value)
+                prepared_value = self._resolve_quotes(right)
+                values_sql.append(f"{left}{op}{prepared_value}")
+                query_args.append(right)
             sql_string += f"UPDATE {self.table_name} SET {','.join(values_sql)}"
 
         elif self.parts.get("delete"):
@@ -119,25 +146,31 @@ class SQLManager:
         elif self.parts.get("returning"):
             columns = self.parts["returning"]["columns"]
             sql_string += f" RETURNING {', '.join(columns)}"
+
         elif self.parts.get("insert"):
             columns = self.parts["insert"]["columns"]
             values = self.parts["insert"]["values"]
             values_sql = []
             for value in values:
                 values_sql.append(self._resolve_quotes(value))
-            sql_string += f"INSERT INTO {self.table_name} ({', '.join(columns)}) VALUES ({', '.join(values_sql)}) RETURNING {', '.join(self.table._columns)}"
+
+            sql_string += f"INSERT INTO {self.table_name} ({', '.join(columns)}) VALUES ({', '.join(values_sql)})"
             query_args = values
 
         where_clause = " WHERE "
         clauses = []
         for part in self.parts.get("where", []):
-            value = part["value"]
+            left = part["left"]
             op = part["op"]
-            column = part["column"]
+            right = part["right"]
 
-            clause = f'"{column}" {op} ' + self._resolve_quotes(value=value)
-            query_args.append(value)
-            clauses.append(clause)
+            prepared_value = self._resolve_quotes(right)
+            if op == "colum_modifier":
+                clauses.append(f"{left}{prepared_value}")
+            else:
+                clauses.append(f"{left}{op}{prepared_value}")
+
+            query_args.append(right)
 
         if clauses:
             sql_string += where_clause
@@ -153,20 +186,13 @@ class SQLManager:
 
     async def coro(self):
         sql_string, query_args = self._prepate_sql()
-        print(sql_string, query_args)
         if self.parts.get("select") or self.parts.get("select_for_update"):
             records = await _EXECUTORS["postgres"].fetchall(sql_string, *query_args)
             if records:
                 return [self.table(**r) for r in records]
             return None
-        else:
-            response = await _EXECUTORS["postgres"].execute(sql_string, *query_args)
-            return response.split(" ")[-1]
+        response = await _EXECUTORS["postgres"].execute(sql_string, *query_args)
+        return response.split(" ")[-1]
 
     def __await__(self):
         return self.coro().__await__()
-
-
-class Meta:
-    def __init__(self, table):
-        self.sql_manager = SQLManager(table)
