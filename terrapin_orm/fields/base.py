@@ -1,6 +1,6 @@
 from abc import abstractmethod
+from collections.abc import Iterable as It
 from typing import Any
-from typing import Iterable as It
 
 from .operations import Add, Contains, Div, Eq, Gt, Gte, IAdd, IDiv, IMul, ISub, Lt, Lte, Mul, NotEq, Sub
 

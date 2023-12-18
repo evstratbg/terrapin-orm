@@ -1,8 +1,9 @@
+from collections.abc import Sequence
 from itertools import chain
-from typing import Any, Sequence
+from typing import Any
 
 from .connection import _EXECUTORS
-from .fields.base import Field
+from .fields.base import Field, IndexedField, PkField
 from .fields.operations import Operator
 from .table import Table
 
@@ -12,11 +13,19 @@ class SQLManager:
         self.parts = {}
         self._vars_counter = 0
         self.table = table
-        self.table_name = table.table_name() if table else None
+        self.table_name = table.config.table_name if table else None
+
+    def drop_table(self):
+        self.parts["drop_table"] = True
+        return self
+
+    def create_table(self):
+        self.parts["create_table"] = True
+        return self
 
     def set_table(self, table: Table):
         self.table = table
-        self.table_name = table.table_name()
+        self.table_name = table.config.table_name
         return self
 
     def from_(self, table: Table):
@@ -106,9 +115,9 @@ class SQLManager:
 
     def _resolve_quotes(self, value: Any):
         self._vars_counter += 1
-        if isinstance(value, (int, float, bool, str)):
+        if isinstance(value, int | float | bool | str):
             return f"${self._vars_counter}"
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, list | tuple):
             values = []
             for v in value:
                 values.append(self._resolve_quotes(v))
@@ -156,6 +165,31 @@ class SQLManager:
 
             sql_string += f"INSERT INTO {self.table_name} ({', '.join(columns)}) VALUES ({', '.join(values_sql)})"
             query_args = values
+        elif self.parts.get("drop_table"):
+            sql_string += f"DROP TABLE {self.table_name}"
+
+        elif self.parts.get("create_table"):
+            fields = {k: v for k, v in self.table.__dict__.items() if isinstance(v, Field)}
+
+            field_definitions = []
+            field_indexes = []
+            for name, field in fields.items():
+                field_definitions.append(f"{name} {field.sql()}")
+                if isinstance(field, IndexedField) and field.index:
+                    field_indexes.append(
+                        field.index_sql(self.table_name, name),
+                    )
+                if isinstance(field, PkField) and field.pk:
+                    field_indexes.append(
+                        field.index_sql(self.table_name, name),
+                    )
+
+            field_definitions_sql = "\n\t"
+            field_definitions_sql += ",\n\t".join(field_definitions)
+            field_definitions_sql += "\n"
+            field_indexes = "\n".join(field_indexes)
+
+            sql_string += f"CREATE TABLE IF NOT EXISTS {self.table_name} ({field_definitions_sql});\n{field_indexes}"
 
         where_clause = " WHERE "
         clauses = []
@@ -191,7 +225,8 @@ class SQLManager:
             if records:
                 return [self.table(**r) for r in records]
             return None
-        response = await _EXECUTORS["postgres"].execute(sql_string, *query_args)
+        response = await _EXECUTORS[self.table.config.db_alias].execute(sql_string, *query_args)
+        self.parts.clear()
         return response.split(" ")[-1]
 
     def __await__(self):

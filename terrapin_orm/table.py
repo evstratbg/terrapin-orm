@@ -1,7 +1,6 @@
 
 from .configs import TableConfig
-from .connection import _EXECUTORS
-from .fields.base import Field, IndexedField, PkField, UnselectedField
+from .fields.base import Field, PkField, UnselectedField
 
 
 class BaseTableMeta(type):
@@ -36,44 +35,3 @@ class Table(metaclass=BaseTableMeta):
             raise AttributeError(f"Column '{name}' was\'t selected")
         return attr
 
-    @classmethod
-    def table_name(cls) -> str:
-        return cls.config.table_name
-
-    @classmethod
-    def sql(cls):
-        """Generate SQL statement to create the table."""
-        fields = {k: v for k, v in cls.__dict__.items() if isinstance(v, Field)}
-        table_name = cls.table_name()
-
-        field_definitions = []
-        field_indexes = []
-        for name, field in fields.items():
-            field_definitions.append(f"{name} {field.sql()}")
-            if isinstance(field, IndexedField) and field.index:
-                field_indexes.append(
-                    field.index_sql(table_name, name),
-                )
-            if isinstance(field, PkField) and field.pk:
-                field_indexes.append(
-                    field.index_sql(table_name, name),
-                )
-
-        field_definitions_sql = "\n\t"
-        field_definitions_sql += ",\n\t".join(field_definitions)
-        field_definitions_sql += "\n"
-        field_indexes = "\n".join(field_indexes)
-
-        return f"CREATE TABLE IF NOT EXISTS {table_name} ({field_definitions_sql});\n{field_indexes}"
-
-    @classmethod
-    async def create_table(cls):
-        """Create table in database."""
-        sql = cls.sql()
-        return await _EXECUTORS["postgres"].execute(sql)
-
-    @classmethod
-    async def drop_table(cls):
-        """Create table in database."""
-        sql = f"DROP TABLE {cls.table_name()};"
-        return await _EXECUTORS["postgres"].execute(sql)

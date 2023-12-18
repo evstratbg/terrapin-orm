@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass
@@ -19,10 +18,4 @@ class DatabaseConfig:
     alias: str = "default"
 
 
-@dataclass
-class OrmConfig:
-    databases: List[DatabaseConfig]
-
-
-
-__all__ = ("TableConfig", "OrmConfig", "DatabaseConfig")
+__all__ = ("TableConfig", "DatabaseConfig")

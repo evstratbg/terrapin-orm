@@ -80,6 +80,7 @@ class PoolManager:
     @classmethod
     async def add_pool(
             cls,
+            alias: str,
             username: str,
             password: str,
             host: str,
@@ -94,7 +95,7 @@ class PoolManager:
             hostname=host,
         )
         pool = await asyncpg.create_pool(dsn)
-        _EXECUTORS[database] = Executor(
+        _EXECUTORS[alias] = Executor(
             pool=pool,
             password=password,
             host=host,

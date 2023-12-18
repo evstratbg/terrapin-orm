@@ -8,9 +8,6 @@ class JSONBField(IndexedField):
     def sql(self):
         return "JSONB"
 
-    # def __get__(self, instance, owner):
-    #     return owner.__dict__[self.name]
-
     def index_sql(self, table_name: str, column_name: str):
         if self.index:
             return f"CREATE INDEX idx_{table_name}_{column_name} ON {table_name} USING GIN ({column_name});"
@@ -22,5 +19,5 @@ class JSONBField(IndexedField):
     def get_json(self, key: str):
         return GetJson(self.name, key)
 
-    def get_value(self, key):
+    def get_value(self, key: str):
         return GetValue(self.name, key)
