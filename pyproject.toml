@@ -54,7 +54,7 @@ mkdocs = "^1.5.2"
 mkdocs-material = "^9.3.1"
 
 [tool.poetry.scripts]
-terrapin = "terrapin.__main__:app"
+terrapin = "terrapin.__cli__:app"
 
 
 [tool.pytest.ini_options]
@@ -166,6 +166,7 @@ unfixable = [
     "ERA001", # eradicate: found commented out code (can be dangerous if fixed automatically)
 ]
 ignore = [
+    "S608",   # Possible SQL injection vector through string-based query construction
     "D203",   # 1 blank line required before class docstring
     "ARG002", # Unused method argument
     "TRY003", # Avoid specifying long messages outside the exception class

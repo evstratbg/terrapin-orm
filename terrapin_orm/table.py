@@ -1,4 +1,6 @@
 
+from typing import TypeVar
+
 from .configs import TableConfig
 from .fields.base import Field, PkField, UnselectedField
 
@@ -25,7 +27,7 @@ class Table(metaclass=BaseTableMeta):
     config = TableConfig(table_name="", db_alias="default", abstract=True)
 
     def __init__(self, **kwargs: [str, [str, int, bool, dict, list, tuple]]) -> None:
-        self.raw_data = kwargs
+        self._raw_data = kwargs
         for column in self._columns:
             setattr(self, column, kwargs.get(column, UnselectedField))
 
@@ -33,5 +35,17 @@ class Table(metaclass=BaseTableMeta):
         attr = super().__getattribute__(name)
         if attr is UnselectedField:
             raise AttributeError(f"Column '{name}' was\'t selected")
+        if isinstance(attr, Field):
+            return attr.value
         return attr
 
+    def __iter__(self):
+        return iter(self._raw_data.items())
+
+
+_T = TypeVar("_T", bound=Table)
+
+__all__ = [
+    "_T",
+    "Table",
+]
