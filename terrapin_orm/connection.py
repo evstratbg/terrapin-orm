@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Any
 
 import asyncpg
@@ -17,6 +18,22 @@ class Executor:
         self.host = host
         self.port = port
         self.database = database
+        self._is_transaction_mode_enabled = False
+
+    def enable_transaction_mode(self):
+        self._is_transaction_mode_enabled = True
+
+    def disable_transaction_mode(self):
+        self._is_transaction_mode_enabled = False
+
+    @asynccontextmanager
+    async def _get_connection(self):
+        async with self._pool.acquire() as conn:
+            if self._is_transaction_mode_enabled:
+                async with conn.transaction():
+                    yield conn
+            else:
+                yield conn
 
     async def execute(self, query: str, *args: Any, timeout: float | None = None) -> str:
         """Execute an SQL command (or commands).
@@ -24,12 +41,12 @@ class Executor:
         This method can execute many SQL commands at once, when no arguments
         are provided.
         """
-        async with self._pool.acquire() as conn:
+        async with self._get_connection() as conn:
             return await conn.execute(query, *args, timeout=timeout)
 
     async def executemany(self, command: str, args: Any, *, timeout: int | None = None):
         """Execute an SQL *command* for each sequence of arguments in *args*."""
-        async with self._pool.acquire() as conn:
+        async with self._get_connection() as conn:
             return await conn.executemany(command, *args, timeout=timeout)
 
     async def fetchval(self, query: str, *args: Any, column: int = 0, timeout: int | None = None):
@@ -47,7 +64,7 @@ class Executor:
         :return: The value of the specified column of the first record, or
                  None if no records were returned by the query.
         """
-        async with self._pool.acquire() as conn:
+        async with self._get_connection() as conn:
             return await conn.fetchval(query, *args, column=column, timeout=timeout)
 
     async def fetchrow(
@@ -58,7 +75,7 @@ class Executor:
     ):
         """Run a query and return the first row."""
 
-        async with self._pool.acquire() as conn:
+        async with self._get_connection() as conn:
             return await conn.fetchrow(query, *args, timeout=timeout)
 
     async def fetchall(
@@ -69,7 +86,7 @@ class Executor:
     ):
         """Run a query and return the first row."""
 
-        async with self._pool.acquire() as conn:
+        async with self._get_connection() as conn:
             return await conn.fetch(query, *args, timeout=timeout)
 
 
